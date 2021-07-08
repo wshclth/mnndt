@@ -120,19 +120,21 @@ class SignificanceTester:
         die_value = self._die_value()
 
         if visualize:
-            fig, ax = plt.subplots()
             if len(self.syms) == 1:
+                fig, ax = plt.subplots(figsize=(17.7, 10))
+                ax.set_title('1D Significance Cutoff')
                 xs = np.linspace(min(self.cov_data[-1]), max(self.cov_data[-1]), 500)
                 ys = [self._ndmnd([x], us, precision, generalized_variance).item() for x in xs]
                 ax.hist(self.cov_data[-1], density=True, alpha=0.5)
                 ax.plot(xs, ys, label='density')
                 ax.set_xlabel(self.syms[-1] + ' log returns')
                 ax.set_ylabel('density')
-                ax.axvline(us.item() + (die_value*np.sqrt(sigmas.item())), label='μ-cutoff', color='black')
-                ax.axvline(mu[0], label='μ-strategy', color='red')
+                ax.axvline(us.item() + (die_value*np.sqrt(sigmas.item())), label=r'$\mu$-cutoff', color='black')
+                ax.axvline(mu[0], label='$\mu$-strategy', color='red')
                 plt.legend()
                 plt.show()
             elif len(self.syms) == 2:
+                fig, ax = plt.subplots(figsize=(17.7, 10))
                 ax.set_title('2D Significance Cutoff')
                 ax.set_xlabel('%s log-returns (cov adj density)' % self.syms[0])
                 ax.set_ylabel('%s log-returns (cov adj density)' % self.syms[1])
@@ -165,23 +167,10 @@ class SignificanceTester:
 
                 tus = v * np.transpose(us)
                 tmus = v * mu
-                ax.axvline(tmus[0,0].item(), c='orange', lw=1, label='μ(%s) (cov adj)' % self.syms[0])
-                ax.axhline(tmus[1,0].item(), c='orange', lw=1, label='μ(%s) (cov adj)' % self.syms[1])
-                ellipse = ax.plot(xs, ys, lw=1, c='black')
+                ax.axvline(tmus[0,0].item(), c='orange', lw=1, label='$\mu$(%s) (cov adj)' % self.syms[0])
+                ax.axhline(tmus[1,0].item(), c='orange', lw=1, label='$\mu$(%s) (cov adj)' % self.syms[1])
+                ellipse = ax.plot(xs, ys, lw=1, c='black', label=r'$\chi^2(5.991) \approx 0.95$ = Mahalanobis Distance')
                 ax.legend()
                 plt.show()
 
         return die_value, self._mahalanobis_distance(mu, us, precision)
-
-
-test1 = SignificanceTester(pandas.to_datetime('2020-01-01'))
-test1.add_returns('AAPL')
-test1.add_returns('TQQQ')
-test1.add_returns('AMD')
-needed, given = test1.test(np.matrix([[0.06], [0.10], [-0.16]]))
-print('Cutoff:', needed)
-print('Given:', given)
-if given < needed:
-    print('Returns are insignificant')
-else:
-    print('Signifiant returns likely')
